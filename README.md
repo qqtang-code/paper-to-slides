@@ -81,15 +81,15 @@ The agent asks for missing essentials and proceeds through production and verifi
 
 ## Dependencies
 
-- **Python 3.9+**. PDF operations require `PyMuPDF>=1.23,<2`.
-- **TeX Live or MiKTeX**, including latexmk, BibTeX, Beamer, Fira Sans, TikZ/PGF, booktabs, pifont, amsmath, and their supporting packages. The included example also uses appendixnumberbeamer.
-- **English slides:** pdfLaTeX. A Chinese Markdown script does not change the slide compilation engine.
-- **Chinese slides:** XeLaTeX, ctex, and Fandol.
-- **Linked papers:** network access and a download tool. Scanned papers require image-reading capability or separate OCR; the helper does not run OCR.
+- **Python 3.9+**. PDF operations require `PyMuPDF>=1.23,<2`. The paper fetcher uses only the standard library.
+- **A TeX engine.** Either **TeX Live or MiKTeX**, including latexmk, BibTeX, Beamer, Fira Sans, TikZ/PGF, booktabs, pifont, amsmath, and their supporting packages (the included example also uses appendixnumberbeamer), or **Tectonic**, which needs no TeX Live and fetches its own packages. `scripts/pdf_tools.py check` reports what the current machine has.
+- **English slides:** pdfLaTeX, or Tectonic. A Chinese Markdown script does not change the slide compilation engine.
+- **Chinese slides:** XeLaTeX, ctex, and Fandol, or Tectonic, which builds the same Chinese sources.
+- **Linked papers:** network access. `scripts/fetch_paper.py` downloads, verifies, and records provenance; scanned papers still require image-reading capability or separate OCR, since the helpers do not run OCR.
 
 On Debian/Ubuntu, relevant packages commonly include `latexmk`, `texlive-latex-extra`, `texlive-fonts-extra`, `texlive-xetex`, and `texlive-lang-chinese`. Package availability varies by distribution.
 
-Install the Python dependency in a virtual environment:
+Install the Python dependency in a virtual environment (macOS and many Linux distributions no longer allow installing into the system interpreter, and `python` may not exist at all — use `python3`):
 
 ```bash
 python3 -m venv .venv
@@ -114,24 +114,39 @@ cp -R assets/template ./my-talk
 .venv/bin/python scripts/pdf_tools.py preview ./my-talk/main.pdf --output-dir ./my-talk/previews
 ```
 
-The template is a gallery of **ten layouts with synthetic content**. Replace its examples when producing a real talk. Its original-figure layouts use a self-created vector figure with editable LaTeX source; they compile without any paper repository or institutional assets.
-
-Useful PDF operations:
+Without a TeX Live installation, build with Tectonic instead; it reports XeLaTeX to `iftex`, so the theme, including Chinese slides, works unchanged:
 
 ```bash
-.venv/bin/python scripts/pdf_tools.py extract paper.pdf --output paper.txt
-.venv/bin/python scripts/pdf_tools.py crop paper.pdf --page 3 --rect 40 90 550 400 --output figure.pdf
+.venv/bin/python scripts/build_slides.py ./my-talk/main.tex --engine tectonic --strict
 ```
 
-Crop rectangles use PDF points and a top-left origin. Cropping preserves existing vectors but cannot convert raster content into vectors. Both scripts provide `--help`.
+Tectonic's BibTeX drops inter-word spaces when it expands `@string` macros, so keep literal field values in a deck's `.bib` files. The helper warns when it finds `@string` next to a Tectonic build. See the [template build notes](assets/template/BUILD.md).
+
+The template is a gallery of **ten layouts with synthetic content**. Replace its examples when producing a real talk. Its original-figure layouts use a self-created vector figure with editable LaTeX source; they compile without any paper repository or institutional assets.
+
+Useful operations:
+
+```bash
+# Fetch a paper with provenance: version resolution, size and SHA-256, archive audit.
+.venv/bin/python scripts/fetch_paper.py 1706.03762v7 --dir paper-source --extract
+# Report the toolchain, or a PDF's page count, rotation, metadata, and pages without text.
+.venv/bin/python scripts/pdf_tools.py check paper.pdf
+.venv/bin/python scripts/pdf_tools.py extract paper.pdf --output paper.txt --max-chars 60000
+.venv/bin/python scripts/pdf_tools.py crop paper.pdf --page 3 --rect 40 90 550 400 --output figure.pdf
+.venv/bin/python scripts/pdf_tools.py hash figures/figure1.png
+```
+
+`fetch_paper.py` accepts an arXiv identifier, an arXiv URL, or a direct file URL, and writes `provenance.json` with the resolved version, title, authors, retrieval time, byte counts, and SHA-256 values. It checks the HTTP status, content type, file signature, and size, and validates every archive member before extracting anything, so a login page or a traversal path is reported instead of being used. Crop rectangles use PDF points and a top-left origin; cropping preserves existing vectors but cannot convert raster content into vectors. Both scripts provide `--help`.
 
 You can also build a generated deck without the Python helper. From the deck directory:
 
 ```bash
 latexmk -norc -pdf -interaction=nonstopmode -halt-on-error -file-line-error -pdflatex="pdflatex -no-shell-escape %O %S" main.tex
+# Or, with no TeX Live installed:
+tectonic --untrusted --keep-logs ./main.tex
 ```
 
-Use XeLaTeX and enable the Chinese setting in `config.tex` when slides contain Chinese. See the [template build notes](assets/template/BUILD.md) for details.
+Use XeLaTeX and enable the Chinese setting in `config.tex` when slides contain Chinese. See the [template build notes](assets/template/BUILD.md) for details, including the `@string` limitation of Tectonic's BibTeX.
 
 ## Repository structure
 
@@ -141,17 +156,20 @@ Use XeLaTeX and enable the Chinese setting in `config.tex` when slides contain C
 | `agents/openai.yaml` | Optional Codex UI metadata |
 | `references/` | Reading, storytelling, visual design, and verification guidance |
 | `assets/template/` | Reusable Beamer theme, configuration, ten layouts, and synthetic assets |
-| `scripts/pdf_tools.py` | PDF text extraction, page previews, and cropping |
-| `scripts/build_slides.py` | latexmk builds, classified diagnostics, and JSON reports |
+| `scripts/fetch_paper.py` | Paper retrieval: version resolution, content checks, hashes, safe extraction, provenance |
+| `scripts/pdf_tools.py` | PDF text extraction, page previews, cropping, hashing, and environment/document checks |
+| `scripts/build_slides.py` | latexmk or Tectonic builds, classified diagnostics, and JSON reports |
+| `tests/smoke_test.py` | Structure, hash, and helper checks over the packaged example |
+| `.github/workflows/checks.yml` | Runs the checks above on Linux and macOS |
 | `examples/attention-oral-10min-original-figures/` | Complete generated Transformer oral, script, sources, and reports |
 
 ## Verification and limitations
 
-The skill checks claims against the paper, records original-figure treatment, compiles in strict mode, inspects every rendered page, and rebuilds from a clean copy in another location. Strict mode rejects compilation errors, missing glyphs, unresolved references, and overflows. A warning-free build still needs visual and factual review.
+The skill checks claims against the paper, records original-figure treatment, compiles in strict mode, inspects every rendered page, and rebuilds from a clean copy in another location. Strict mode rejects compilation errors, missing glyphs, unresolved references, and overflows. Underfull boxes, resolved fonts, font substitutions, and unresolved bibliography strings are reported separately so that a strict build stays actionable; `--overfull-tolerance` exists for full-width tables that are a fraction of a point too wide. A warning-free build still needs visual and factual review.
 
-The example's [verification record](examples/attention-oral-10min-original-figures/verification.md) documents the checks actually performed. These cover that deliverable; they are not a claim of exhaustive compatibility across languages, papers, or TeX installations. English and Chinese workflows are provided; other writing systems may need fonts and LaTeX configuration. Timing is estimated and should be rehearsed.
+The example's [verification record](examples/attention-oral-10min-original-figures/verification.md) documents the checks actually performed. These cover that deliverable; they are not a claim of exhaustive compatibility across languages, papers, or TeX installations. English and Chinese workflows are provided and both build with Tectonic as well as with a full TeX Live; other writing systems may need fonts and LaTeX configuration. Timing is estimated and should be rehearsed.
 
-For maintenance, use the [verification guidance](references/verification.md), keep new checks and outputs in a temporary directory, and record what was actually run. Standard TeX dependencies are not bundled. Generated auxiliary files and local build logs are excluded by `.gitignore`; example PDFs and source assets are retained.
+For maintenance, run `tests/smoke_test.py`, which verifies the example's recorded hashes and exercises every PDF helper on the packaged example. It needs only Python and PyMuPDF; the same checks run in CI. Use the [verification guidance](references/verification.md), keep new checks and outputs in a temporary directory, and record what was actually run. Standard TeX dependencies are not bundled. Generated auxiliary files and local build logs are excluded by `.gitignore`; example PDFs and source assets are retained.
 
 ## License and attribution
 

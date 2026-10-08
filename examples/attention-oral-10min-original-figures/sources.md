@@ -10,7 +10,7 @@
 - Source: https://arxiv.org/src/1706.03762v7; 1,150,988 bytes; SHA-256 `2e7a7d9ee2520d22eb23dae0cb148e167be02a30d6cb3f11b1c67723194339c6`.
 - `ms.tex` includes `introduction.tex`, `background.tex`, `model_architecture.tex`, `why_self_attention.tex`, `training.tex`, `results.tex`, and `visualizations.tex`; the conclusion and bibliography are inline. Claims were checked against the source and matching PDF, including visual inspection of architecture/mechanism diagrams and result-table alignment.
 - English slides, Chinese script, anonymous presenter. Public paper authors are credited separately. This is a presentation of the paper, not a claim that the presenter authored it.
-- Existing paper sources, skill files, RRSI, Transformer, and Harness-Zero presentations are preserved. This deck is a separate deliverable.
+- This deck is a standalone deliverable; it needs no other project, deck, or skill checkout to build.
 
 ## Core-figure inventory and reserved narrative time
 

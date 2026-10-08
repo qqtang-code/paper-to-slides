@@ -10,7 +10,7 @@ Start with the abstract, stated contributions, methods, result tables, conclusio
 
 ## Local PDFs
 
-1. Use `pdf_tools.py extract` to produce text with physical page numbers. Check that the page count and extracted text are plausible.
+1. Start with `pdf_tools.py check paper.pdf`, which reports the page count, page size, rotation, metadata, and any page without extractable text. Then use `pdf_tools.py extract` to produce text with physical page numbers, and confirm that the extraction is plausible. A PyMuPDF repair message on stderr (`MuPDF error: format error ... object out of range`) means the cross-reference table was damaged, not that the text is unusable; confirm by inspecting rendered pages. For a long paper, pass `--max-chars` so the output is split at page boundaries and can be read in parts.
 2. Use `pdf_tools.py preview` to render pages. Inspect method figures, tables spanning columns, equations, footnotes, and garbled text visually. Do not infer table alignment from text-extraction order.
 3. Scanned pages require available OCR or an image-capable model. Empty extracted text does not mean a page has no content. If neither capability is available, identify the pages that cannot be read reliably instead of inventing their contents.
 4. When standalone source assets are unavailable, prefer `crop` to reuse PDF figures while preserving vector text and paths. Retain legends, axis units, error bars, and comparison conditions. If identifying information must be removed, recreate an anonymous figure: PDF cropping is not secure redaction, and underlying content may remain recoverable.
@@ -18,6 +18,13 @@ Start with the abstract, stated contributions, methods, result tables, conclusio
 Coordinates use a top-left origin, points as units, and the order `x0 y0 x1 y1`. Page numbers start at 1. Choose coordinates from an unrotated PDF page as displayed in the preview. The helper rejects pages with a nonzero `/Rotate` value and explains why. Normalize rotation in a copy first, or use another tool that handles it and inspect the result again. Divide preview pixel coordinates by `dpi/72` before using them as PDF points.
 
 ## Public paper links
+
+Use `scripts/fetch_paper.py <reference> --dir <dir> --extract` rather than assembling download, hash,
+and extraction commands by hand. It accepts an arXiv identifier, an arXiv URL, or a direct file URL;
+resolves an unversioned link to the concrete version; performs the checks below; and writes
+`provenance.json` with the supplied URL, resolved URL, title, authors, version, retrieval time,
+byte count, and SHA-256 for every artifact, plus a member audit of the source archive. Read its
+record when filling in `sources.md`, and state which values came from it. The rules it enforces:
 
 - Record the supplied URL, resolved URL, title, authors, version, retrieval date, and file SHA-256. Prefer LaTeX source for the same version. For example, arXiv `.../abs/1706.03762v7` corresponds to `.../src/1706.03762v7` and `.../pdf/1706.03762v7`. If the URL omits a version, resolve and record the actual version used.
 - Use a download tool with a reasonable timeout. Check HTTP status, content type, file signature, and nonzero size so a login or error page is not mistaken for a PDF. Check again after redirects. If source is unavailable, use the PDF instead of repeatedly retrying the same failed endpoint.
@@ -58,4 +65,4 @@ Add comments beside important frames, for example:
 
 For PDFs, use physical page numbers and add printed page numbers or figure/table identifiers where useful. For source, use file paths, line numbers, and stable labels. If prose, tables, or figures disagree, record the conflict and narrow the claim to verifiable evidence. Do not silently repair the paper and attribute the repaired conclusion to its authors.
 
-Keep a core figure when a local conflict can be explained alongside it. For example, RRSI v2 Figure 2 labels complexity-aware acceptance as L1-style and pruning as L0-style, while Section 3 and Appendix C describe acceptance as L2-style and pruning as L1-style (edit-cardinality control is L0-style). Preserve the method diagram and disclose the conflicting labels; explain the operational mechanisms without presenting the analogies as literal norm penalties. This local mismatch alone is not a reason to discard the entire overview.
+Keep a core figure when a local conflict can be explained alongside it. A method overview may label a component differently from the prose that describes it: a diagram can tag an operation with one level or stage while the corresponding section uses another, and an appendix can introduce a third naming. Preserve the method diagram and disclose the conflicting labels; explain what each component does operationally instead of treating the diagram's labels as literal definitions. A local naming mismatch alone is not a reason to discard the entire overview.

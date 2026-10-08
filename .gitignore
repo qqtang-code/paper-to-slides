@@ -19,9 +19,10 @@ __pycache__/
 *.xdv
 *.build-output.txt
 
-# Local previews and the README's scratch output directory
+# Local previews and scratch output directories
 previews/
 /my-talk/
+/paper-source/
 
 # OS metadata
 .DS_Store

@@ -1,0 +1,66 @@
+name: checks
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    name: smoke test (${{ matrix.os }}, python ${{ matrix.python }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        python: ["3.9", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Install the PDF dependency
+        run: python -m pip install --upgrade pip "PyMuPDF>=1.23,<2"
+      - name: Run the smoke test
+        run: python tests/smoke_test.py
+
+  build:
+    name: build the template and example (tectonic)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install PyMuPDF and Tectonic
+        run: |
+          python -m pip install --upgrade pip "PyMuPDF>=1.23,<2"
+          curl -fsSL -o tectonic.tar.gz \
+            "https://github.com/tectonic-typesetting/tectonic/releases/download/tectonic%400.17.0/tectonic-0.17.0-x86_64-unknown-linux-musl.tar.gz"
+          tar xzf tectonic.tar.gz
+          sudo mv tectonic /usr/local/bin/
+          tectonic --version
+      - name: Build the layout gallery
+        run: |
+          cp -R assets/template /tmp/gallery
+          python scripts/build_slides.py /tmp/gallery/main.tex --engine tectonic --strict
+      - name: Build the packaged example and check the result
+        run: |
+          cp -R examples/attention-oral-10min-original-figures /tmp/example
+          python scripts/build_slides.py /tmp/example/main.tex --engine tectonic --strict
+          python tests/check_built_deck.py /tmp/example/build-report.json 15
+          python -c "import fitz; t=fitz.open('/tmp/example/main.pdf')[14].get_text(); assert 'Advances' in t and 'Systems' in t, t[:200]"
+      - name: Verify the Chinese workflow
+        run: |
+          mkdir -p /tmp/cjk
+          cp assets/template/config.tex assets/template/paper-slides.sty /tmp/cjk/
+          cp -R assets/template/figures /tmp/cjk/figures
+          sed -i 's/\\ChineseSlidesfalse/\\ChineseSlidestrue/' /tmp/cjk/config.tex
+          cp tests/fixtures/chinese-frame.tex /tmp/cjk/main.tex
+          cd /tmp/cjk
+          tectonic --untrusted --keep-logs ./main.tex
+          python -c "import fitz; text=fitz.open('main.pdf')[0].get_text(); assert '注意力' in text, text; print('Chinese slide ok')"

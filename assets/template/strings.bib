@@ -1,1 +1,9 @@
-@string{examplevenue = {Synthetic Research Notes}}
+% String definitions for \bibliography{strings,refs}; the file is kept so the documented
+% order resolves, and it may stay comment-only.
+%
+% Tectonic's BibTeX implementation drops inter-word spaces when it expands @string macros,
+% so a bibliography that relies on them renders as
+% "In AdvancesinNeuralInformationProcessingSystems30" under Tectonic, while BibTeX through
+% latexmk renders it correctly. Prefer literal field values in refs.bib unless you build
+% only with latexmk + BibTeX. When a paper's own bibliography defines @string macros, read
+% them for reference and copy the resolved text into literal values here.

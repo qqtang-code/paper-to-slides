@@ -17,10 +17,24 @@ Chinese: set `\ChineseSlidestrue` in `config.tex`, then use a fresh output copy:
 latexmk -norc -xelatex -interaction=nonstopmode -halt-on-error -file-line-error -xelatex="xelatex -no-shell-escape %O %S" main.tex
 ```
 
+Without a TeX Live installation, Tectonic builds the same sources and fetches its own packages:
+
+```bash
+tectonic --untrusted --keep-logs ./main.tex
+```
+
+Tectonic reports XeLaTeX to `iftex`, so the theme, including Chinese slides, works unchanged.
+One limitation matters for references: its BibTeX drops inter-word spaces when it expands
+`@string` macros, so keep literal field values in `refs.bib` rather than macros defined in
+`strings.bib`, and check the rendered bibliography after changing either file. Frame titles
+containing math such as `$\rightarrow$` or `\\` also make hyperref warn that a token is not
+allowed in a PDF string; wrap that content in `\texorpdfstring`.
+
 The optional skill helper `scripts/build_slides.py` additionally summarizes
-warnings. It is not required to compile this folder. A generated talk should
-replace this file with its actual engine, dependencies, input provenance and
-verification results, and include `speaker-script.md` and `sources.md`.
+warnings and accepts `--engine tectonic`. It is not required to compile this
+folder. A generated talk should replace this file with its actual engine,
+dependencies, input provenance and verification results, and include
+`speaker-script.md` and `sources.md`.
 
 ## Original-figure layouts
 

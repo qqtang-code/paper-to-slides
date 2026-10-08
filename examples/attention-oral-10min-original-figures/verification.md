@@ -38,7 +38,8 @@ from earlier presentations or skill-maintenance tests.
   9 and documented with an original prose excerpt on backup page 14.
 - The final strict **pdfLaTeX + BibTeX** build passed with zero errors,
   missing glyphs, unresolved references, overflows, or other warnings.
-  See `build-report.json`, `main.log`, and `main.build-output.txt`.
+  See `build-report.json`; `main.log` and `main.build-output.txt` are produced by
+  a local build and are not tracked in the repository.
 - Rendered and visually inspected all 15 final pages at 150 dpi. Inspected
   pages 3–6, 9–10, and 14 again at 240 dpi for original-figure labels, matrix
   notation, table cells, crop boundaries, and attribution. Checked cover,

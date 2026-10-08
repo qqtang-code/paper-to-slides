@@ -1,0 +1,28 @@
+{
+  "main": "main.tex",
+  "engine": "pdflatex",
+  "strict": true,
+  "compiled": true,
+  "passed": true,
+  "returncode": 0,
+  "pdf": "main.pdf",
+  "log": "main.log",
+  "build_output": "main.build-output.txt",
+  "errors": [],
+  "missing_glyphs": [],
+  "unresolved_references": [],
+  "overflows": [],
+  "other_warnings": [],
+  "command": [
+    "latexmk",
+    "-norc",
+    "-pdf",
+    "-g",
+    "-bibtex",
+    "-interaction=nonstopmode",
+    "-halt-on-error",
+    "-file-line-error",
+    "-pdflatex=pdflatex -no-shell-escape %O %S",
+    "./main.tex"
+  ]
+}

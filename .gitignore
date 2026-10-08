@@ -1,0 +1,27 @@
+# Python environments and caches
+.venv/
+__pycache__/
+*.py[cod]
+
+# Generated LaTeX auxiliaries and local build logs
+*.aux
+*.bbl
+*.blg
+*.fdb_latexmk
+*.fls
+*.log
+*.nav
+*.out
+*.snm
+*.synctex.gz
+*.toc
+*.vrb
+*.xdv
+*.build-output.txt
+
+# Local previews and the README's scratch output directory
+previews/
+/my-talk/
+
+# OS metadata
+.DS_Store

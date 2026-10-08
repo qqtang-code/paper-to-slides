@@ -1,0 +1,4 @@
+interface:
+  display_name: "Paper to Slides"
+  short_description: "Turn research papers into Beamer slides and timed scripts"
+  default_prompt: "Use $paper-to-slides to turn this paper into a 10-minute conference talk with LaTeX source, a PDF, and a timed speaker script."

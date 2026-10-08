@@ -1,0 +1,86 @@
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{paper-slides}[2026/09/26 Configurable academic Beamer theme]
+\RequirePackage{iftex}
+\ifPDFTeX
+  \ifChineseSlides
+    \PackageError{paper-slides}{Chinese slides require XeLaTeX}{Use --engine xelatex.}
+  \fi
+  \RequirePackage[T1]{fontenc}
+  \RequirePackage[utf8]{inputenc}
+\else
+  \ifXeTeX\else
+    \PackageError{paper-slides}{Use pdfLaTeX or XeLaTeX}{These are the supported engines.}
+  \fi
+\fi
+\ifChineseSlides
+  \RequirePackage{xeCJK}
+  % Fandol has no declared OpenType script; avoid requesting a script tag.
+  \newcommand{\PaperFandolName}{fandol}
+  \ifx\CJKFontSet\PaperFandolName
+    \defaultCJKfontfeatures{}
+  \fi
+  \edef\PaperCtexOptions{UTF8,fontset=\CJKFontSet}
+  \expandafter\PassOptionsToPackage\expandafter{\PaperCtexOptions}{ctex}
+  \RequirePackage{ctex}
+  \renewcommand{\CJKfamilydefault}{\CJKsfdefault}
+\fi
+\ifx\LatinFontPackage\empty\else
+  \RequirePackage[sfdefault]{\LatinFontPackage}
+\fi
+\RequirePackage{amsmath,amssymb,booktabs,array,pifont,graphicx,tikz}
+\usetikzlibrary{arrows.meta,positioning}
+\graphicspath{{figures/}{./}}
+\usefonttheme{professionalfonts}
+\setbeamertemplate{navigation symbols}{}
+\setbeamercolor{background canvas}{bg=white}
+\setbeamercolor{normal text}{fg=SlideInk,bg=white}
+\setbeamercolor{structure}{fg=SlideBlue}
+\setbeamercolor{frametitle}{fg=SlideBlue}
+\setbeamercolor{block title}{bg=SlideBlue,fg=white}
+\setbeamercolor{block body}{bg=SlideLight!45,fg=SlideInk}
+\setbeamercolor{itemize item}{fg=SlideBlue}
+\setbeamercolor{itemize subitem}{fg=SlideRed}
+\setbeamertemplate{itemize item}{\small\raisebox{0.3pt}{\textbullet}}
+\setbeamertemplate{itemize subitem}{\scriptsize\raisebox{0.3pt}{\textendash}}
+\setbeamertemplate{blocks}[rounded][shadow=false]
+\setbeamertemplate{frametitle}{%
+  \vskip0.6em%
+  \begin{minipage}[t]{0.75\textwidth}\raggedright%
+    {\color{SlideBlue}\bfseries\fontsize{16}{18}\selectfont\insertframetitle\par}%
+  \end{minipage}\hfill%
+  \begin{minipage}[t]{0.23\textwidth}\raggedleft%
+    {\scriptsize\color{SlideRed}\HeaderInstitution\par}%
+  \end{minipage}\par%
+  \vskip3pt{\color{SlideBlue}\rule{\textwidth}{1pt}}\par%
+  \vskip2pt{\small\color{SlideGray}\insertframesubtitle\par}%
+  \vskip2pt%
+}
+\setbeamertemplate{footline}{%
+  \hbox{%
+    \begin{beamercolorbox}[wd=.82\paperwidth,ht=2.6ex,dp=1.3ex,leftskip=1.3em]{}%
+      {\scriptsize\color{SlideGray}\insertshorttitle}%
+    \end{beamercolorbox}%
+    \begin{beamercolorbox}[wd=.18\paperwidth,ht=2.6ex,dp=1.3ex,rightskip=1.3em]{}%
+      \hfill{\scriptsize\color{SlideGray}\insertframenumber\,/\,\inserttotalframenumber}%
+    \end{beamercolorbox}%
+  }\vskip2pt%
+}
+\setbeamertemplate{title page}{%
+  \begin{center}
+    {\small\color{SlideGray}\TalkType\par}\vspace{0.6em}
+    {\color{SlideBlue}\bfseries\fontsize{21}{25}\selectfont\inserttitle\par}\vspace{0.35em}
+    {\color{SlideBlueDark}\large\insertsubtitle\par}\vspace{0.4em}
+    {\color{SlideRed}\rule{0.4\textwidth}{1.4pt}\par}\vspace{0.65em}
+    {\small\insertauthor\par}\vspace{0.35em}
+    {\small\color{SlideBlue}\Presenter\par}\vspace{0.35em}
+    {\footnotesize\insertinstitute\par}\vspace{0.35em}
+    {\scriptsize\color{SlideGray}\Contact\par}
+    {\scriptsize\color{SlideGray}\insertdate\par}
+  \end{center}
+}
+\newcommand{\kw}[1]{\textbf{\textcolor{SlideBlue}{#1}}}
+\newcommand{\hot}[1]{\textbf{\textcolor{SlideRed}{#1}}}
+\newcommand{\good}[1]{\textbf{\textcolor{SlideGreen}{#1}}}
+\providecommand{\cmark}{\textcolor{SlideGreen}{\ding{51}}}
+\providecommand{\xmark}{\textcolor{SlideRed}{\ding{55}}}
+\newcommand{\takeaway}[1]{\framesubtitle{#1}}

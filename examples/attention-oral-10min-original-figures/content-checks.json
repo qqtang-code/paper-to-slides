@@ -1,0 +1,132 @@
+{
+  "strict_build": {
+    "passed": true,
+    "engine": "pdflatex",
+    "warnings": 0
+  },
+  "relocation_build": {
+    "passed": true,
+    "engine": "pdflatex",
+    "warnings": 0
+  },
+  "script": {
+    "physical_pages": 15,
+    "main_pages": 12,
+    "backup_pages": 3,
+    "main_seconds": 540,
+    "buffer_seconds": 60,
+    "per_page_seconds": [
+      20,
+      45,
+      55,
+      60,
+      45,
+      55,
+      50,
+      35,
+      65,
+      45,
+      35,
+      30
+    ],
+    "all_pages_have_speech_pointing_transition": true,
+    "main_spoken_hanzi": 1994,
+    "title_and_frame_mapping": true
+  },
+  "numbers": {
+    "table2_ende": {
+      "ByteNet": "23.75",
+      "GNMT + RL": "24.6",
+      "ConvS2S": "25.16",
+      "MoE": "26.03",
+      "GNMT + RL Ensemble": "26.30",
+      "ConvS2S Ensemble": "26.36",
+      "Transformer (base model)": "27.3",
+      "Transformer (big)": "28.4"
+    },
+    "strongest_prior_ende": "ConvS2S Ensemble",
+    "big_gain_bleu_points": "2.04",
+    "table3_dev_head_bleu": {
+      "1": "24.9",
+      "4": "25.5",
+      "8": "25.8",
+      "16": "25.8",
+      "32": "25.4"
+    },
+    "eight_vs_one_gain_bleu_points": "0.9",
+    "eight_sixteen_tie": true,
+    "thirtytwo_declines": true,
+    "enfr_discrepancy_disclosed_on_main_9_and_backup_14": true
+  },
+  "original_assets": {
+    "figure1-architecture.png": {
+      "unchanged": true,
+      "sha256": "56d69ccc192b90c3b93e5e285ff892f74753f970103939b40291945e106e9f79"
+    },
+    "figure2a-attention.png": {
+      "unchanged": true,
+      "sha256": "6d40a44e2ec3f0cdab207c768a9085b6b908bbefa82c5af6613dc8233bee6a42"
+    },
+    "figure2b-multihead.png": {
+      "unchanged": true,
+      "sha256": "ba8a3ede5d40183ce8c18de249be60bec692646d53db108a3df51797a3c8634a"
+    }
+  },
+  "portability": {
+    "clean_source_copy": true,
+    "path_contains_spaces": true,
+    "all_page_renders_identical": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15
+    ],
+    "no_external_project_or_skill_dependencies": true
+  },
+  "visual_review": {
+    "all_pages_at_150_dpi": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15
+    ],
+    "dense_pages_at_240_dpi": [
+      3,
+      4,
+      5,
+      6,
+      9,
+      10,
+      14
+    ],
+    "no_visible_clipping_or_overlap": true,
+    "overview_plus_enlargement_and_transcriptions": true
+  },
+  "preserved_existing_files": {
+    "checked": 228,
+    "changed": []
+  },
+  "pdf_sha256": "f708fe51c081e9c2cbbd94555beb963b2bd1d8072890974361466bff2b5fc335"
+}

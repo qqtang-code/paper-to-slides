@@ -10,7 +10,11 @@ import json
 from pathlib import Path
 import sys
 
-import fitz
+try:
+    # PyMuPDF >= 1.24 exposes `pymupdf`; the deprecated `fitz` alias warns on stdout there.
+    import pymupdf as fitz
+except ImportError:  # pragma: no cover - exercised only with PyMuPDF < 1.24
+    import fitz
 
 
 def main():

@@ -71,11 +71,16 @@ def tool_state():
     state = {"python": sys.version.split()[0], "pymupdf": None,
              "engines": {}, "note": "Tectonic needs no TeX Live and runs BibTeX itself."}
     try:
-        import fitz
-        state["pymupdf"] = fitz.__version__
+        import pymupdf as fitz
     except ImportError:
-        state["pymupdf"] = None
+        try:
+            import fitz
+        except ImportError:
+            fitz = None
+    if fitz is None:
         state["note"] = REQUIREMENTS_HINT.format(requirements=requirements_path())
+    else:
+        state["pymupdf"] = fitz.__version__
     for name in ("latexmk", "pdflatex", "xelatex", "tectonic", "bibtex"):
         path = shutil.which(name)
         if not path:
@@ -150,10 +155,16 @@ def main():
         return
 
     try:
-        import fitz
+        # PyMuPDF >= 1.24 exposes `pymupdf`; importing the deprecated `fitz` alias there
+        # prints a notice on stdout, which would corrupt this script's machine-readable
+        # output.
+        import pymupdf as fitz
     except ImportError:
-        parser.exit(2, "Missing dependency: PyMuPDF. " +
-                    REQUIREMENTS_HINT.format(requirements=requirements_path()) + "\n")
+        try:
+            import fitz
+        except ImportError:
+            parser.exit(2, "Missing dependency: PyMuPDF. " +
+                        REQUIREMENTS_HINT.format(requirements=requirements_path()) + "\n")
     try:
         with fitz.open(args.pdf) as doc:
             if not doc.is_pdf:

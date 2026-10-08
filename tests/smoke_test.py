@@ -10,7 +10,6 @@ Add --network to also fetch a small real paper and confirm the recorded hashes a
 """
 
 import argparse
-import importlib.util
 import json
 from pathlib import Path
 import re
@@ -41,6 +40,15 @@ REQUIRED = [
 ABSOLUTE_PATH = re.compile(r"/(?:Users|home)/[A-Za-z0-9._-]+/")
 GENERATED = {"*.aux", "*.bbl", "*.blg", "*.log", "*.fls", "*.fdb_latexmk", "*.build-output.txt",
              "*.nav", "*.out", "*.snm", "*.toc", "*.xdv"}
+
+try:
+    # PyMuPDF >= 1.24 exposes `pymupdf`; the deprecated `fitz` alias warns on stdout there.
+    import pymupdf as fitz
+except ImportError:  # pragma: no cover - exercised only with PyMuPDF < 1.24
+    try:
+        import fitz
+    except ImportError:
+        fitz = None
 
 failures = []
 
@@ -92,21 +100,36 @@ def test_links():
     check("every relative link resolves", not broken, "; ".join(broken))
 
 
+def json_output(result, label):
+    """Parse a helper's JSON, or record a diagnostic check failure instead of a traceback."""
+    try:
+        return json.loads(result.stdout)
+    except json.JSONDecodeError as exc:
+        check(f"{label} emits JSON", False,
+              f"{exc}; stdout={result.stdout[:160]!r} stderr={result.stderr[:240]!r}")
+        return None
+
+
 def test_recorded_hashes():
     print("example hashes against content-checks.json")
     checks = json.loads((EXAMPLE / "content-checks.json").read_text(encoding="utf-8"))
-    pdf_hash = run(str(SCRIPTS / "pdf_tools.py"), "hash", str(EXAMPLE_PDF))
-    recorded = json.loads(pdf_hash.stdout)[0]["sha256"]
-    check("main.pdf matches pdf_sha256", recorded == checks["pdf_sha256"], recorded)
+    recorded = json_output(run(str(SCRIPTS / "pdf_tools.py"), "hash", str(EXAMPLE_PDF)), "hash")
+    if recorded is None:
+        return
+    check("main.pdf matches pdf_sha256", recorded[0]["sha256"] == checks["pdf_sha256"], recorded[0]["sha256"])
     for name, entry in checks["original_assets"].items():
-        result = json.loads(run(str(SCRIPTS / "pdf_tools.py"), "hash",
-                                str(EXAMPLE / "figures" / name)).stdout)[0]
-        check(f"{name} unchanged", result["sha256"] == entry["sha256"], result["sha256"])
+        result = json_output(run(str(SCRIPTS / "pdf_tools.py"), "hash",
+                                 str(EXAMPLE / "figures" / name)), "hash")
+        if result is None:
+            return
+        check(f"{name} unchanged", result[0]["sha256"] == entry["sha256"], result[0]["sha256"])
 
 
 def test_pdf_tools(work):
     print("pdf_tools.py on the packaged example")
-    state = json.loads(run(str(SCRIPTS / "pdf_tools.py"), "check", str(EXAMPLE_PDF)).stdout)
+    state = json_output(run(str(SCRIPTS / "pdf_tools.py"), "check", str(EXAMPLE_PDF)), "check")
+    if state is None:
+        return
     check("check reports 15 pages", state["document"]["page_count"] == 15)
     check("check reports no rotated pages", state["document"]["rotated_pages"] == [])
     check("check reports no unreadable pages", state["document"]["pages_without_text"] == [])
@@ -130,7 +153,6 @@ def test_pdf_tools(work):
     crop = work / "crop.pdf"
     run(str(SCRIPTS / "pdf_tools.py"), "crop", str(EXAMPLE_PDF), "--page", "3",
         "--rect", "40", "20", "400", "200", "--output", str(crop))
-    import fitz
     with fitz.open(crop) as doc:
         check("crop keeps the requested size",
               abs(doc[0].rect.width - 360) < 0.01 and abs(doc[0].rect.height - 180) < 0.01)
@@ -246,7 +268,7 @@ def main():
     parser.add_argument("--network", action="store_true",
                         help="Also fetch arXiv:1706.03762v7 and check its recorded hashes")
     args = parser.parse_args()
-    if importlib.util.find_spec("fitz") is None:
+    if fitz is None:
         print("PyMuPDF is required: python3 -m pip install -r scripts/requirements.txt")
         return 2
     with tempfile.TemporaryDirectory() as directory:

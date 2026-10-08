@@ -19,8 +19,8 @@ jobs:
         os: [ubuntu-latest, macos-latest]
         python: ["3.9", "3.12"]
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python }}
       - name: Install the PDF dependency
@@ -32,8 +32,8 @@ jobs:
     name: build the template and example (tectonic)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
       - name: Install PyMuPDF and Tectonic
@@ -53,7 +53,7 @@ jobs:
           cp -R examples/attention-oral-10min-original-figures /tmp/example
           python scripts/build_slides.py /tmp/example/main.tex --engine tectonic --strict
           python tests/check_built_deck.py /tmp/example/build-report.json 15
-          python -c "import fitz; t=fitz.open('/tmp/example/main.pdf')[14].get_text(); assert 'Advances' in t and 'Systems' in t, t[:200]"
+          python -c "import pymupdf as fitz; t=fitz.open('/tmp/example/main.pdf')[14].get_text(); assert 'Advances' in t and 'Systems' in t, t[:200]"
       - name: Verify the Chinese workflow
         run: |
           mkdir -p /tmp/cjk
@@ -63,4 +63,4 @@ jobs:
           cp tests/fixtures/chinese-frame.tex /tmp/cjk/main.tex
           cd /tmp/cjk
           tectonic --untrusted --keep-logs ./main.tex
-          python -c "import fitz; text=fitz.open('main.pdf')[0].get_text(); assert '注意力' in text, text; print('Chinese slide ok')"
+          python -c "import pymupdf as fitz; text=fitz.open('main.pdf')[0].get_text(); assert '注意力' in text, text; print('Chinese slide ok')"

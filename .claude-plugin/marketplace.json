@@ -1,0 +1,35 @@
+{
+  "name": "qqtang-code",
+  "owner": {
+    "name": "Quantong Qiu",
+    "url": "https://github.com/qqtang-code"
+  },
+  "description": "Agent skills for research and document workflows.",
+  "plugins": [
+    {
+      "name": "paper-to-slides",
+      "source": "./plugins/paper-to-slides",
+      "version": "1.0.0",
+      "description": "Turn research papers into self-contained Beamer slides with the paper's original figures and a timed speaker script.",
+      "displayName": "Paper to Slides",
+      "displayName_i18n": {
+        "zh-CN": "论文转幻灯片"
+      },
+      "description_i18n": {
+        "zh-CN": "把论文做成自包含的 Beamer 讲稿：保留论文原始图表，并附逐页配时的讲稿脚本。"
+      },
+      "category": "productivity",
+      "author": {
+        "name": "Quantong Qiu"
+      },
+      "homepage": "https://github.com/qqtang-code/paper-to-slides",
+      "license": "MIT",
+      "keywords": [
+        "research-papers",
+        "presentations",
+        "beamer",
+        "latex"
+      ]
+    }
+  ]
+}

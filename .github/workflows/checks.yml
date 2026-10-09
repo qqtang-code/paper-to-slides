@@ -9,6 +9,9 @@ on:
 permissions:
   contents: read
 
+env:
+  SKILL: plugins/paper-to-slides/skills/paper-to-slides
+
 jobs:
   smoke:
     name: smoke test (${{ matrix.os }}, python ${{ matrix.python }})
@@ -46,19 +49,19 @@ jobs:
           tectonic --version
       - name: Build the layout gallery
         run: |
-          cp -R assets/template /tmp/gallery
-          python scripts/build_slides.py /tmp/gallery/main.tex --engine tectonic --strict
+          cp -R "$SKILL/assets/template" /tmp/gallery
+          python "$SKILL/scripts/build_slides.py" /tmp/gallery/main.tex --engine tectonic --strict
       - name: Build the packaged example and check the result
         run: |
-          cp -R examples/attention-oral-10min-original-figures /tmp/example
-          python scripts/build_slides.py /tmp/example/main.tex --engine tectonic --strict
+          cp -R "$SKILL/examples/attention-oral-10min-original-figures" /tmp/example
+          python "$SKILL/scripts/build_slides.py" /tmp/example/main.tex --engine tectonic --strict
           python tests/check_built_deck.py /tmp/example/build-report.json 15
           python -c "import pymupdf as fitz; t=fitz.open('/tmp/example/main.pdf')[14].get_text(); assert 'Advances' in t and 'Systems' in t, t[:200]"
       - name: Verify the Chinese workflow
         run: |
           mkdir -p /tmp/cjk
-          cp assets/template/config.tex assets/template/paper-slides.sty /tmp/cjk/
-          cp -R assets/template/figures /tmp/cjk/figures
+          cp "$SKILL/assets/template/config.tex" "$SKILL/assets/template/paper-slides.sty" /tmp/cjk/
+          cp -R "$SKILL/assets/template/figures" /tmp/cjk/figures
           sed -i 's/\\ChineseSlidesfalse/\\ChineseSlidestrue/' /tmp/cjk/config.tex
           cp tests/fixtures/chinese-frame.tex /tmp/cjk/main.tex
           cd /tmp/cjk

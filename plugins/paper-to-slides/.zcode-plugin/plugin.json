@@ -1,0 +1,14 @@
+{
+  "name": "paper-to-slides",
+  "version": "1.0.0",
+  "description": "Turn research papers into self-contained Beamer slides with the paper's original figures and a timed speaker script.",
+  "description_i18n": {
+    "en": "Turn LaTeX projects, local PDFs, or accessible paper links into a self-contained Beamer deck, a compiled PDF, and a timed slide-by-slide speaker script.",
+    "zh-CN": "把 LaTeX 工程、本地 PDF 或可访问的论文链接，做成自包含的 Beamer 讲稿、编译好的 PDF，以及逐页配时的讲稿脚本。"
+  },
+  "author": {
+    "name": "Quantong Qiu"
+  },
+  "license": "MIT",
+  "skills": "./skills"
+}

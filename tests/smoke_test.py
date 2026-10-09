@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Smoke-test the skill: repository structure, recorded hashes, and the bundled helpers.
+"""Smoke-test the skill and its plugin packaging.
 
 Runs with the standard library plus PyMuPDF, so it works locally and in CI:
 
@@ -18,25 +18,35 @@ import sys
 import tempfile
 
 ROOT = Path(__file__).resolve().parent.parent
-SCRIPTS = ROOT / "scripts"
-EXAMPLE = ROOT / "examples" / "attention-oral-10min-original-figures"
+PLUGIN = ROOT / "plugins" / "paper-to-slides"
+SKILL = PLUGIN / "skills" / "paper-to-slides"
+MARKETPLACE = ROOT / ".claude-plugin" / "marketplace.json"
+SCRIPTS = SKILL / "scripts"
+EXAMPLE = SKILL / "examples" / "attention-oral-10min-original-figures"
 EXAMPLE_PDF = EXAMPLE / "main.pdf"
-REQUIRED = [
-    "SKILL.md", "README.md", "LICENSE", "THIRD_PARTY_NOTICES.md",
-    "references/paper-reading.md", "references/storytelling.md",
-    "references/visual-design.md", "references/verification.md",
-    "assets/template/main.tex", "assets/template/config.tex", "assets/template/paper-slides.sty",
-    "assets/template/refs.bib", "assets/template/strings.bib", "assets/template/BUILD.md",
-    "assets/template/figures/synthetic-method.pdf", "assets/template/figures/synthetic-method.tex",
-    "scripts/pdf_tools.py", "scripts/build_slides.py", "scripts/fetch_paper.py",
-    "scripts/requirements.txt",
-    "examples/attention-oral-10min-original-figures/main.tex",
-    "examples/attention-oral-10min-original-figures/main.pdf",
-    "examples/attention-oral-10min-original-figures/sources.md",
-    "examples/attention-oral-10min-original-figures/speaker-script.md",
-    "examples/attention-oral-10min-original-figures/verification.md",
-    "examples/attention-oral-10min-original-figures/content-checks.json",
-]
+MARKETPLACE_NAME = re.compile(r"^[a-z0-9][a-z0-9._-]{0,127}$")
+PLACEHOLDER = re.compile(r"\bTODO\b|\bFIXME\b|<your[-_ ][^>]+>|YOUR_API_KEY")
+SCANNED_SUFFIXES = {".json", ".md", ".mjs", ".cjs", ".js", ".ts", ".txt", ".yaml", ".yml", ".toml"}
+ROOT_FILES = ["README.md", "LICENSE", "THIRD_PARTY_NOTICES.md", ".gitignore",
+              ".claude-plugin/marketplace.json",
+              "plugins/paper-to-slides/.zcode-plugin/plugin.json",
+              "plugins/paper-to-slides/.claude-plugin/plugin.json"]
+SKILL_FILES = ["SKILL.md", "LICENSE", "THIRD_PARTY_NOTICES.md", "agents/openai.yaml",
+               "references/paper-reading.md", "references/storytelling.md",
+               "references/visual-design.md", "references/verification.md",
+               "assets/template/main.tex", "assets/template/config.tex",
+               "assets/template/paper-slides.sty", "assets/template/refs.bib",
+               "assets/template/strings.bib", "assets/template/BUILD.md",
+               "assets/template/figures/synthetic-method.pdf",
+               "assets/template/figures/synthetic-method.tex",
+               "scripts/pdf_tools.py", "scripts/build_slides.py", "scripts/fetch_paper.py",
+               "scripts/requirements.txt",
+               "examples/attention-oral-10min-original-figures/main.tex",
+               "examples/attention-oral-10min-original-figures/main.pdf",
+               "examples/attention-oral-10min-original-figures/sources.md",
+               "examples/attention-oral-10min-original-figures/speaker-script.md",
+               "examples/attention-oral-10min-original-figures/verification.md",
+               "examples/attention-oral-10min-original-figures/content-checks.json"]
 ABSOLUTE_PATH = re.compile(r"/(?:Users|home)/[A-Za-z0-9._-]+/")
 GENERATED = {"*.aux", "*.bbl", "*.blg", "*.log", "*.fls", "*.fdb_latexmk", "*.build-output.txt",
              "*.nav", "*.out", "*.snm", "*.toc", "*.xdv"}
@@ -70,19 +80,31 @@ def run(*args, expect=0, **kwargs):
     return result
 
 
+def json_output(result, label):
+    """Parse a helper's JSON, or record a diagnostic check failure instead of a traceback."""
+    try:
+        return json.loads(result.stdout)
+    except json.JSONDecodeError as exc:
+        check(f"{label} emits JSON", False,
+              f"{exc}; stdout={result.stdout[:160]!r} stderr={result.stderr[:240]!r}")
+        return None
+
+
 def test_structure():
     print("structure")
-    missing = [name for name in REQUIRED if not (ROOT / name).is_file()]
+    missing = [name for name in ROOT_FILES if not (ROOT / name).is_file()]
+    missing += [name for name in SKILL_FILES if not (SKILL / name).is_file()]
     check("required files present", not missing, ", ".join(missing))
-    front = (ROOT / "SKILL.md").read_text(encoding="utf-8")
+    front = (SKILL / "SKILL.md").read_text(encoding="utf-8")
     check("SKILL.md has frontmatter", front.startswith("---\n") and "\n---\n" in front[4:])
     head = front.split("\n---\n", 1)[0]
     check("frontmatter declares name", re.search(r"^name:\s*paper-to-slides\s*$", head, re.M) is not None)
     description = re.search(r"^description:\s*(.+)$", head, re.M)
     check("frontmatter declares description", description is not None and len(description.group(1)) > 80)
+    check("skill directory matches the declared name", SKILL.name == "paper-to-slides")
     leaked = []
     for path in sorted(ROOT.rglob("*")):
-        if path.is_file() and path.suffix in {".md", ".tex", ".py", ".sty", ".bib", ".yaml", ".yml", ".json"}:
+        if path.is_file() and path.suffix in SCANNED_SUFFIXES | {".tex", ".py", ".sty", ".bib"}:
             if ABSOLUTE_PATH.search(path.read_text(encoding="utf-8", errors="replace")):
                 leaked.append(str(path.relative_to(ROOT)))
     check("no absolute home paths in text files", not leaked, ", ".join(leaked))
@@ -100,14 +122,69 @@ def test_links():
     check("every relative link resolves", not broken, "; ".join(broken))
 
 
-def json_output(result, label):
-    """Parse a helper's JSON, or record a diagnostic check failure instead of a traceback."""
-    try:
-        return json.loads(result.stdout)
-    except json.JSONDecodeError as exc:
-        check(f"{label} emits JSON", False,
-              f"{exc}; stdout={result.stdout[:160]!r} stderr={result.stderr[:240]!r}")
-        return None
+def test_plugin_packaging():
+    print("plugin and marketplace packaging")
+    catalog = json.loads(MARKETPLACE.read_text(encoding="utf-8"))
+    check("marketplace name is valid", bool(MARKETPLACE_NAME.match(catalog.get("name", ""))),
+          str(catalog.get("name")))
+    check("marketplace declares an owner", isinstance(catalog.get("owner"), dict)
+          and bool(catalog["owner"].get("name")))
+    entries = catalog.get("plugins")
+    check("marketplace lists plugins", isinstance(entries, list) and bool(entries))
+    for entry in entries or []:
+        source = entry.get("source", "")
+        # A relative source must stay inside the marketplace root; "./" would resolve to the root.
+        check(f"{entry.get('name')}: source is a relative path",
+              isinstance(source, str) and source.startswith("./") and source != "./", source)
+        plugin_root = (ROOT / source).resolve() if isinstance(source, str) else None
+        check(f"{entry.get('name')}: source exists inside the marketplace root",
+              plugin_root is not None and plugin_root.is_dir()
+              and ROOT.resolve() in plugin_root.parents)
+        if plugin_root is None or not plugin_root.is_dir():
+            continue
+        manifests = {}
+        for label, relative in (("zcode", ".zcode-plugin/plugin.json"),
+                                ("claude", ".claude-plugin/plugin.json")):
+            path = plugin_root / relative
+            check(f"{entry.get('name')}: has a {label} manifest", path.is_file())
+            if path.is_file():
+                manifests[label] = json.loads(path.read_text(encoding="utf-8"))
+        check(f"{entry.get('name')}: directory name matches the manifest name",
+              all(m.get("name") == plugin_root.name for m in manifests.values()))
+        check(f"{entry.get('name')}: listing name matches the manifest name",
+              all(m.get("name") == entry.get("name") for m in manifests.values()))
+        check(f"{entry.get('name')}: listing version matches the manifest version",
+              all(m.get("version") == entry.get("version") for m in manifests.values()))
+        for label, manifest in manifests.items():
+            declared = manifest.get("skills")
+            check(f"{entry.get('name')}: {label} manifest declares skills", bool(declared))
+            check(f"{entry.get('name')}: {label} manifest uses a plugin-relative path",
+                  isinstance(declared, str) and declared.startswith("./"), str(declared))
+            if not (isinstance(declared, str) and declared.startswith("./")):
+                continue
+            directory = plugin_root / declared[2:]
+            check(f"{entry.get('name')}: {label} skills directory exists", directory.is_dir())
+            if directory.is_dir():
+                found = sorted(p.parent.name for p in directory.glob("*/SKILL.md"))
+                check(f"{entry.get('name')}: {label} finds the skill",
+                      found == [entry.get("name")], ", ".join(found) or "none")
+            check(f"{entry.get('name')}: no unresolved placeholders in the {label} manifest",
+                  not PLACEHOLDER.search(json.dumps(manifest)))
+        resources = [plugin_root / str(m.get("skills", "")).lstrip("./") for m in manifests.values()]
+        scanned = []
+        for resource in resources:
+            for path in sorted(resource.rglob("*")) if resource.is_dir() else []:
+                if path.is_file() and path.suffix in SCANNED_SUFFIXES:
+                    if PLACEHOLDER.search(path.read_text(encoding="utf-8", errors="replace")):
+                        scanned.append(str(path.relative_to(plugin_root)))
+        check(f"{entry.get('name')}: no unresolved placeholders in declared resources",
+              not scanned, ", ".join(scanned))
+        check(f"{entry.get('name')}: no plugin source escapes the plugin root",
+              all(plugin_root.resolve() in p.resolve().parents
+                  for p in plugin_root.rglob("*") if p.is_file()))
+    for name in ("LICENSE", "THIRD_PARTY_NOTICES.md"):
+        check(f"{name} travels with the skill",
+              (SKILL / name).read_bytes() == (ROOT / name).read_bytes())
 
 
 def test_recorded_hashes():
@@ -174,10 +251,11 @@ def test_build_helper(work):
 
     deck = work / "deck"
     deck.mkdir()
+    template = SKILL / "assets" / "template"
     for name in ("main.tex", "config.tex", "paper-slides.sty", "refs.bib", "strings.bib"):
-        (deck / name).write_bytes((ROOT / "assets" / "template" / name).read_bytes())
+        (deck / name).write_bytes((template / name).read_bytes())
     (deck / "figures").mkdir()
-    for asset in (ROOT / "assets" / "template" / "figures").iterdir():
+    for asset in (template / "figures").iterdir():
         (deck / "figures" / asset.name).write_bytes(asset.read_bytes())
 
     engine = "tectonic" if subprocess.run(["which", "tectonic"], stdout=subprocess.DEVNULL,
@@ -275,6 +353,7 @@ def main():
         work = Path(directory)
         test_structure()
         test_links()
+        test_plugin_packaging()
         test_recorded_hashes()
         test_pdf_tools(work)
         test_build_helper(work)

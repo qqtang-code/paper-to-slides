@@ -1,0 +1,22 @@
+{
+  "name": "paper-to-slides",
+  "displayName": "Paper to Slides",
+  "version": "1.0.0",
+  "description": "Turn research papers into self-contained Beamer slides with the paper's original figures and a timed speaker script.",
+  "author": {
+    "name": "Quantong Qiu",
+    "url": "https://github.com/qqtang-code"
+  },
+  "homepage": "https://github.com/qqtang-code/paper-to-slides",
+  "repository": "https://github.com/qqtang-code/paper-to-slides",
+  "license": "MIT",
+  "keywords": [
+    "research-papers",
+    "presentations",
+    "beamer",
+    "latex",
+    "slides",
+    "speaker-notes"
+  ],
+  "skills": "./skills"
+}

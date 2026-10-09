@@ -6,14 +6,14 @@ Designed for **Codex and Claude Code**, it accepts LaTeX projects, local PDFs, a
 
 ## Example: Attention Is All You Need
 
-The [included example](examples/attention-oral-10min-original-figures/BUILD.md) was generated with this skill from [arXiv:1706.03762v7](https://arxiv.org/abs/1706.03762v7):
+The [included example](plugins/paper-to-slides/skills/paper-to-slides/examples/attention-oral-10min-original-figures/BUILD.md) was generated with this skill from [arXiv:1706.03762v7](https://arxiv.org/abs/1706.03762v7):
 
 - **12 main slides + 3 backup slides**, in English.
 - A **Chinese speaker script**, with 9 minutes of main narration and a 1-minute buffer for a 10-minute oral.
 - Original architecture and attention diagrams, a connected detail view, and original result-table excerpts in the main talk.
 - Editable source, local assets, citations, figure provenance, and build reports.
 
-[View the slides](examples/attention-oral-10min-original-figures/main.pdf) · [Read the script](examples/attention-oral-10min-original-figures/speaker-script.md) · [Browse the source](examples/attention-oral-10min-original-figures/main.tex) · [See the evidence record](examples/attention-oral-10min-original-figures/sources.md)
+[View the slides](plugins/paper-to-slides/skills/paper-to-slides/examples/attention-oral-10min-original-figures/main.pdf) · [Read the script](plugins/paper-to-slides/skills/paper-to-slides/examples/attention-oral-10min-original-figures/speaker-script.md) · [Browse the source](plugins/paper-to-slides/skills/paper-to-slides/examples/attention-oral-10min-original-figures/main.tex) · [See the evidence record](plugins/paper-to-slides/skills/paper-to-slides/examples/attention-oral-10min-original-figures/sources.md)
 
 This is an example of a completed output. New presentations start from the reusable template and the supplied paper; the example's topic, page count, and narrative are not requirements for other talks.
 
@@ -46,20 +46,35 @@ Method overviews, model architectures, and key evidence that support the talk's 
 
 Redraws can supplement intuition. Replacing a core original requires a specific reason recorded in `sources.md`; layout convenience alone is insufficient. Figure selection follows the paper and speaking time, without a fixed count or ratio. A theory paper with no useful figures does not need forced imagery.
 
-## Use with your agent
+## Install
 
-Clone or download this repository. All shell commands below assume the repository root is the current directory.
+This repository is both a **plugin marketplace** and a self-contained skill. All three routes install the same content; pick whichever your client supports.
+
+**Claude Code**, as a marketplace plugin:
+
+```text
+/plugin marketplace add qqtang-code/paper-to-slides
+/plugin install paper-to-slides@qqtang-code
+```
+
+**ZCode**: open **Plugin Marketplace → Add → Add Plugin Marketplace**, paste this repository's directory (the folder containing `.claude-plugin/`), then install `paper-to-slides` from **Personal**.
+
+**Any client, without a marketplace**: copy the skill directory `plugins/paper-to-slides/skills/paper-to-slides/`, under the name `paper-to-slides`, into a skills directory your client scans. Copying only `SKILL.md` omits required resources.
+
+Directory locations and discovery behavior are documented in the [Codex skills documentation](https://developers.openai.com/codex/skills/) and [Claude Code skills documentation](https://code.claude.com/docs/en/skills). The core instructions do not depend on Codex's optional `agents/openai.yaml` UI metadata.
+
+The shell commands below run from the skill directory, `plugins/paper-to-slides/skills/paper-to-slides/`.
+
+## Use with your agent
 
 For a first run, ask your agent to read the entry point directly:
 
 ```text
-Read ./SKILL.md and use paper-to-slides to process
+Read the paper-to-slides SKILL.md and use it to process
 https://arxiv.org/abs/1706.03762.
 Create a 10-minute conference oral with English slides and a Chinese speaker
 script. Keep the presenter anonymous and save the output to ./my-talk/.
 ```
-
-For repeated use, copy or symlink the **entire repository directory**, under the name `paper-to-slides`, into a skills directory supported by your client. Copying only `SKILL.md` omits required resources. Directory locations and discovery behavior are documented in the [Codex skills documentation](https://developers.openai.com/codex/skills/) and [Claude Code skills documentation](https://code.claude.com/docs/en/skills). The core instructions do not depend on Codex's optional `agents/openai.yaml` UI metadata.
 
 Once installed, an explicit Codex request can use the skill name:
 
@@ -120,7 +135,7 @@ Without a TeX Live installation, build with Tectonic instead; it reports XeLaTeX
 .venv/bin/python scripts/build_slides.py ./my-talk/main.tex --engine tectonic --strict
 ```
 
-Tectonic's BibTeX drops inter-word spaces when it expands `@string` macros, so keep literal field values in a deck's `.bib` files. The helper warns when it finds `@string` next to a Tectonic build. See the [template build notes](assets/template/BUILD.md).
+Tectonic's BibTeX drops inter-word spaces when it expands `@string` macros, so keep literal field values in a deck's `.bib` files. The helper warns when it finds `@string` next to a Tectonic build. See the [template build notes](plugins/paper-to-slides/skills/paper-to-slides/assets/template/BUILD.md).
 
 The template is a gallery of **ten layouts with synthetic content**. Replace its examples when producing a real talk. Its original-figure layouts use a self-created vector figure with editable LaTeX source; they compile without any paper repository or institutional assets.
 
@@ -146,35 +161,39 @@ latexmk -norc -pdf -interaction=nonstopmode -halt-on-error -file-line-error -pdf
 tectonic --untrusted --keep-logs ./main.tex
 ```
 
-Use XeLaTeX and enable the Chinese setting in `config.tex` when slides contain Chinese. See the [template build notes](assets/template/BUILD.md) for details, including the `@string` limitation of Tectonic's BibTeX.
+Use XeLaTeX and enable the Chinese setting in `config.tex` when slides contain Chinese. See the [template build notes](plugins/paper-to-slides/skills/paper-to-slides/assets/template/BUILD.md) for details, including the `@string` limitation of Tectonic's BibTeX.
 
 ## Repository structure
 
+The table abbreviates the skill directory `plugins/paper-to-slides/skills/paper-to-slides/` as `…/`.
+
 | Path | Purpose |
 | --- | --- |
-| [SKILL.md](SKILL.md) | Entry point, defaults, workflow, and completion criteria |
-| `agents/openai.yaml` | Optional Codex UI metadata |
-| `references/` | Reading, storytelling, visual design, and verification guidance |
-| `assets/template/` | Reusable Beamer theme, configuration, ten layouts, and synthetic assets |
-| `scripts/fetch_paper.py` | Paper retrieval: version resolution, content checks, hashes, safe extraction, provenance |
-| `scripts/pdf_tools.py` | PDF text extraction, page previews, cropping, hashing, and environment/document checks |
-| `scripts/build_slides.py` | latexmk or Tectonic builds, classified diagnostics, and JSON reports |
-| `tests/smoke_test.py` | Structure, hash, and helper checks over the packaged example |
+| `.claude-plugin/marketplace.json` | Marketplace catalog that lists this plugin for Claude Code and ZCode |
+| `plugins/paper-to-slides/` | Plugin root: the ZCode and Claude Code manifests, and `skills/` |
+| `…/SKILL.md` | Entry point, defaults, workflow, and completion criteria |
+| `…/references/` | Reading, storytelling, visual design, and verification guidance |
+| `…/assets/template/` | Reusable Beamer theme, configuration, ten layouts, and synthetic assets |
+| `…/scripts/fetch_paper.py` | Paper retrieval: version resolution, content checks, hashes, safe extraction, provenance |
+| `…/scripts/pdf_tools.py` | PDF text extraction, page previews, cropping, hashing, and environment/document checks |
+| `…/scripts/build_slides.py` | latexmk or Tectonic builds, classified diagnostics, and JSON reports |
+| `…/agents/openai.yaml` | Optional Codex UI metadata |
+| `…/examples/attention-oral-10min-original-figures/` | Complete generated Transformer oral, script, sources, and reports |
+| `tests/smoke_test.py` | Structure, packaging, hash, and helper checks over the packaged example |
 | `.github/workflows/checks.yml` | Runs the checks above on Linux and macOS |
-| `examples/attention-oral-10min-original-figures/` | Complete generated Transformer oral, script, sources, and reports |
 
 ## Verification and limitations
 
 The skill checks claims against the paper, records original-figure treatment, compiles in strict mode, inspects every rendered page, and rebuilds from a clean copy in another location. Strict mode rejects compilation errors, missing glyphs, unresolved references, and overflows. Underfull boxes, resolved fonts, font substitutions, and unresolved bibliography strings are reported separately so that a strict build stays actionable; `--overfull-tolerance` exists for full-width tables that are a fraction of a point too wide. A warning-free build still needs visual and factual review.
 
-The example's [verification record](examples/attention-oral-10min-original-figures/verification.md) documents the checks actually performed. These cover that deliverable; they are not a claim of exhaustive compatibility across languages, papers, or TeX installations. English and Chinese workflows are provided and both build with Tectonic as well as with a full TeX Live; other writing systems may need fonts and LaTeX configuration. Timing is estimated and should be rehearsed.
+The example's [verification record](plugins/paper-to-slides/skills/paper-to-slides/examples/attention-oral-10min-original-figures/verification.md) documents the checks actually performed. These cover that deliverable; they are not a claim of exhaustive compatibility across languages, papers, or TeX installations. English and Chinese workflows are provided and both build with Tectonic as well as with a full TeX Live; other writing systems may need fonts and LaTeX configuration. Timing is estimated and should be rehearsed.
 
-For maintenance, run `tests/smoke_test.py`, which verifies the example's recorded hashes and exercises every PDF helper on the packaged example. It needs only Python and PyMuPDF; the same checks run in CI. Use the [verification guidance](references/verification.md), keep new checks and outputs in a temporary directory, and record what was actually run. Standard TeX dependencies are not bundled. Generated auxiliary files and local build logs are excluded by `.gitignore`; example PDFs and source assets are retained.
+For maintenance, run `tests/smoke_test.py`, which verifies the example's recorded hashes and exercises every PDF helper on the packaged example. It needs only Python and PyMuPDF; the same checks run in CI. Use the [verification guidance](plugins/paper-to-slides/skills/paper-to-slides/references/verification.md), keep new checks and outputs in a temporary directory, and record what was actually run. Standard TeX dependencies are not bundled. Generated auxiliary files and local build logs are excluded by `.gitignore`; example PDFs and source assets are retained.
 
 ## License and attribution
 
 The skill's original instructions, helper scripts, reusable template, and original example slide content are available under the [MIT License](LICENSE).
 
-Reproduced paper figures, tables, and quoted text retain their original rights and are **not relicensed under MIT**. The Transformer example credits Vaswani et al.; the paper expressly permits attributed reproduction of its figures and tables for journalistic or scholarly works. See [third-party notices](THIRD_PARTY_NOTICES.md) and the example's [source record](examples/attention-oral-10min-original-figures/sources.md) for scope and provenance.
+Reproduced paper figures, tables, and quoted text retain their original rights and are **not relicensed under MIT**. The Transformer example credits Vaswani et al.; the paper expressly permits attributed reproduction of its figures and tables for journalistic or scholarly works. See [third-party notices](THIRD_PARTY_NOTICES.md) and the example's [source record](plugins/paper-to-slides/skills/paper-to-slides/examples/attention-oral-10min-original-figures/sources.md) for scope and provenance.
 
 The design workflow was inspired by `frontend-slides`; this project's instructions, tools, and Beamer template were written independently and contain no code or templates from it.

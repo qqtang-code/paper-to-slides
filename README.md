@@ -65,6 +65,16 @@ Directory locations and discovery behavior are documented in the [Codex skills d
 
 The shell commands below run from the skill directory, `plugins/paper-to-slides/skills/paper-to-slides/`.
 
+### Building the upload archive
+
+Marketplaces take a zip whose root holds `SKILL.md` with `references/`, `assets/`, and `scripts/` beside it. Build one from the skill directory, with layout, self-containment, and upload-size checks applied:
+
+```bash
+python3 tools/package_skill.py            # writes dist/paper-to-slides-<version>.zip
+```
+
+It refuses an archive whose markdown links escape the skill directory, reports the size and SHA-256 of the result, and stamps the plugin version into the file name so a given upload can be identified later. Marketplaces generally have no repository sync, so bump the version and re-upload after a change to the skill.
+
 ## Use with your agent
 
 For a first run, ask your agent to read the entry point directly:
@@ -180,6 +190,7 @@ The table abbreviates the skill directory `plugins/paper-to-slides/skills/paper-
 | `…/agents/openai.yaml` | Optional Codex UI metadata |
 | `…/examples/attention-oral-10min-original-figures/` | Complete generated Transformer oral, script, sources, and reports |
 | `tests/smoke_test.py` | Structure, packaging, hash, and helper checks over the packaged example |
+| `tools/package_skill.py` | Builds and validates the uploadable skill archive |
 | `.github/workflows/checks.yml` | Runs the checks above on Linux and macOS |
 
 ## Verification and limitations

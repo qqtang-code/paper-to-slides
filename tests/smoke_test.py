@@ -16,18 +16,20 @@ import re
 import subprocess
 import sys
 import tempfile
+import zipfile
 
 ROOT = Path(__file__).resolve().parent.parent
 PLUGIN = ROOT / "plugins" / "paper-to-slides"
 SKILL = PLUGIN / "skills" / "paper-to-slides"
 MARKETPLACE = ROOT / ".claude-plugin" / "marketplace.json"
+TOOLS = ROOT / "tools"
 SCRIPTS = SKILL / "scripts"
 EXAMPLE = SKILL / "examples" / "attention-oral-10min-original-figures"
 EXAMPLE_PDF = EXAMPLE / "main.pdf"
 MARKETPLACE_NAME = re.compile(r"^[a-z0-9][a-z0-9._-]{0,127}$")
 PLACEHOLDER = re.compile(r"\bTODO\b|\bFIXME\b|<your[-_ ][^>]+>|YOUR_API_KEY")
 SCANNED_SUFFIXES = {".json", ".md", ".mjs", ".cjs", ".js", ".ts", ".txt", ".yaml", ".yml", ".toml"}
-ROOT_FILES = ["README.md", "LICENSE", "THIRD_PARTY_NOTICES.md", ".gitignore",
+ROOT_FILES = ["README.md", "LICENSE", "THIRD_PARTY_NOTICES.md", ".gitignore", "tools/package_skill.py",
               ".claude-plugin/marketplace.json",
               "plugins/paper-to-slides/.zcode-plugin/plugin.json",
               "plugins/paper-to-slides/.claude-plugin/plugin.json"]
@@ -330,6 +332,36 @@ def test_fetch_helper(work, network):
         print("  skip  network fetch (pass --network to run it)")
 
 
+def test_distributable_archive(work):
+    """The archived copy is what a marketplace or a manual install receives, so it must stand alone."""
+    print("distributable archive")
+    built = run(str(TOOLS / "package_skill.py"), "--output", str(work / "dist"))
+    report = json_output(built, "package_skill")
+    if report is None:
+        return
+    check("archive stays under the upload limit",
+          report["bytes"] <= report["max_bytes"], f"{report['bytes']} bytes")
+    with zipfile.ZipFile(report["archive"]) as bundle:
+        names = [name for name in bundle.namelist() if not name.endswith("/")]
+        check("SKILL.md sits at the archive root", "SKILL.md" in names)
+        roots = {name.split("/")[0] for name in names}
+        check("skill resources travel beside it",
+              {"references", "assets", "scripts", "examples"} <= roots, ", ".join(sorted(roots)))
+        check("licence and notices travel with the skill",
+              {"LICENSE", "THIRD_PARTY_NOTICES.md"} <= set(names))
+        check("no build or editor artifacts in the archive",
+              not any(name.endswith((".pyc", ".aux", ".log", ".DS_Store")) for name in names))
+        extracted = work / "unpacked"
+        bundle.extractall(extracted)
+        check("the archive has a single top-level root", (extracted / "SKILL.md").is_file())
+    state = json_output(run(str(extracted / "scripts" / "pdf_tools.py"), "check",
+                            str(extracted / "examples" / "attention-oral-10min-original-figures" / "main.pdf")),
+                        "packaged pdf_tools.py check")
+    if state is not None:
+        check("the extracted copy runs its own tooling",
+              state["document"]["page_count"] == 15)
+
+
 def test_no_generated_artifacts():
     print("repository hygiene")
     stray = []
@@ -358,6 +390,7 @@ def main():
         test_pdf_tools(work)
         test_build_helper(work)
         test_fetch_helper(work, args.network)
+        test_distributable_archive(work)
         test_no_generated_artifacts()
     print()
     if failures:

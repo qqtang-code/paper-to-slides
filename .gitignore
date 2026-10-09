@@ -24,5 +24,8 @@ previews/
 /my-talk/
 /paper-source/
 
+# Archives built by tools/package_skill.py
+/dist/
+
 # OS metadata
 .DS_Store
